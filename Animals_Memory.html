@@ -1,0 +1,1489 @@
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Animal Memory Game</title>
+
+<style>
+
+/* =========================
+   GENERAL DESIGN
+========================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    min-height: 100vh;
+
+    background: linear-gradient(
+        135deg,
+        #a8edea,
+        #fed6e3
+    );
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+}
+
+.game-container {
+    width: 100%;
+    max-width: 900px;
+
+    background: white;
+
+    border-radius: 30px;
+
+    padding: 30px;
+
+    text-align: center;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.15);
+}
+
+
+/* =========================
+   TITLES
+========================= */
+
+h1 {
+    color: #5b4b8a;
+
+    font-size: 42px;
+
+    margin-bottom: 10px;
+}
+
+h2 {
+    color: #5b4b8a;
+
+    font-size: 30px;
+
+    margin-bottom: 15px;
+}
+
+.subtitle {
+    color: #555;
+
+    font-size: 19px;
+
+    margin-bottom: 20px;
+}
+
+
+/* =========================
+   START SCREEN
+========================= */
+
+.start-screen {
+    display: none;
+}
+
+.start-screen.active {
+    display: block;
+}
+
+.start-screen p {
+    color: #555;
+
+    font-size: 20px;
+
+    line-height: 1.6;
+
+    margin-bottom: 25px;
+}
+
+.animal-decoration {
+    font-size: 55px;
+
+    margin: 20px 0;
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+button {
+    border: none;
+
+    border-radius: 15px;
+
+    padding: 13px 25px;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    font-family: inherit;
+
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+.start-btn {
+    background: #6c63ff;
+
+    color: white;
+
+    font-size: 21px;
+
+    padding: 15px 35px;
+
+    box-shadow:
+        0 5px 12px rgba(0,0,0,0.15);
+}
+
+.restart-btn {
+    background: #ff8fab;
+
+    color: white;
+
+    box-shadow:
+        0 5px 10px rgba(0,0,0,0.12);
+}
+
+.next-btn {
+    background: #72d572;
+
+    color: white;
+
+    display: none;
+
+    margin-left: 10px;
+}
+
+
+/* =========================
+   GAME SCREEN
+========================= */
+
+.game-screen {
+    display: block;
+}
+
+.game-screen.hidden {
+    display: none;
+}
+
+.instructions {
+    background: #fff3cd;
+
+    border-radius: 18px;
+
+    padding: 15px;
+
+    margin-bottom: 20px;
+
+    color: #5a4a00;
+
+    font-size: 17px;
+}
+
+.level {
+    color: #6c63ff;
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+    margin-bottom: 10px;
+}
+
+
+/* =========================
+   STATS
+========================= */
+
+.stats {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 20px;
+
+    flex-wrap: wrap;
+
+    margin-bottom: 20px;
+}
+
+.stat {
+    background: #eee7ff;
+
+    padding: 10px 20px;
+
+    border-radius: 15px;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    color: #5b4b8a;
+}
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+.message {
+    min-height: 35px;
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+    margin-bottom: 15px;
+}
+
+.correct-message {
+    color: #3c9b45;
+}
+
+.wrong-message {
+    color: #d9534f;
+}
+
+
+/* =========================
+   MEMORY GRID
+========================= */
+
+.memory-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 15px;
+
+    max-width: 700px;
+
+    margin: 0 auto 25px;
+}
+
+
+/* =========================
+   CARDS
+========================= */
+
+.card {
+    height: 145px;
+
+    perspective: 1000px;
+
+    cursor: pointer;
+}
+
+.card-inner {
+    width: 100%;
+
+    height: 100%;
+
+    position: relative;
+
+    transition:
+        transform 0.5s;
+
+    transform-style: preserve-3d;
+}
+
+.card.flipped .card-inner,
+.card.matched .card-inner {
+    transform:
+        rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+    position: absolute;
+
+    width: 100%;
+
+    height: 100%;
+
+    backface-visibility: hidden;
+
+    border-radius: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-direction: column;
+
+    box-shadow:
+        0 5px 10px rgba(0,0,0,0.12);
+}
+
+.card-front {
+    background:
+        linear-gradient(
+            135deg,
+            #7f7fd5,
+            #86a8e7
+        );
+
+    color: white;
+
+    font-size: 45px;
+
+    border: 4px solid white;
+}
+
+.card-back {
+    background: white;
+
+    transform:
+        rotateY(180deg);
+
+    border: 4px solid #86a8e7;
+
+    padding: 8px;
+}
+
+.animal-emoji {
+    font-size: 65px;
+}
+
+.animal-word {
+    font-size: 20px;
+
+    font-weight: bold;
+
+    color: #5b4b8a;
+
+    margin-top: 5px;
+}
+
+.image-card .animal-word {
+    display: none;
+}
+
+.word-card .animal-emoji {
+    display: none;
+}
+
+.word-card .animal-word {
+    display: block;
+
+    font-size: 24px;
+}
+
+.matched .card-back {
+    background: #d8ffd8;
+
+    border-color: #5cc85c;
+}
+
+
+/* =========================
+   SHAKE ANIMATION
+========================= */
+
+.incorrect {
+    animation: shake 0.4s;
+}
+
+@keyframes shake {
+
+    0% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-8px);
+    }
+
+    50% {
+        transform: translateX(8px);
+    }
+
+    75% {
+        transform: translateX(-8px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+
+/* =========================
+   GAME OVER
+========================= */
+
+.game-over {
+    display: none;
+}
+
+.game-over.active {
+    display: block;
+}
+
+.game-over p {
+    color: #555;
+
+    font-size: 20px;
+
+    line-height: 1.6;
+
+    margin-bottom: 20px;
+}
+
+.final-score {
+    font-size: 45px;
+
+    color: #6c63ff;
+
+    font-weight: bold;
+
+    margin: 15px;
+}
+
+.stars {
+    font-size: 45px;
+
+    margin: 15px;
+}
+
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+
+@media (max-width: 650px) {
+
+    .game-container {
+        padding: 20px 12px;
+    }
+
+    h1 {
+        font-size: 32px;
+    }
+
+    h2 {
+        font-size: 25px;
+    }
+
+    .memory-grid {
+        grid-template-columns:
+            repeat(3, 1fr);
+
+        gap: 10px;
+    }
+
+    .card {
+        height: 115px;
+    }
+
+    .animal-emoji {
+        font-size: 50px;
+    }
+
+    .animal-word {
+        font-size: 16px;
+    }
+
+    .word-card .animal-word {
+        font-size: 18px;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div class="game-container">
+
+
+    <!-- =========================
+         START SCREEN
+    ========================== -->
+
+    <div
+        class="start-screen active"
+        id="startScreen"
+    >
+
+        <h1>
+            🐾 Animal Memory 🐾
+        </h1>
+
+        <h2>
+            Let's learn animals!
+        </h2>
+
+        <p>
+            Match each animal picture
+            with its English word.
+            <br><br>
+
+            Can you find all the pairs?
+        </p>
+
+        <div class="animal-decoration">
+            🐶 🐱 🐰 🦁
+        </div>
+
+        <button
+            class="start-btn"
+            onclick="startGame()"
+        >
+            ▶️ Click to Start
+        </button>
+
+    </div>
+
+
+    <!-- =========================
+         GAME SCREEN
+    ========================== -->
+
+    <div
+        class="game-screen hidden"
+        id="gameScreen"
+    >
+
+        <h1>
+            🐾 Animal Memory 🐾
+        </h1>
+
+        <p class="subtitle">
+            Match the animal with its English word!
+        </p>
+
+
+        <div class="instructions">
+
+            💡
+
+            <strong>
+                How to play:
+            </strong>
+
+            Click two cards.
+
+            Find the picture
+            and its correct word!
+
+        </div>
+
+
+        <div
+            class="level"
+            id="levelText"
+        >
+            Level 1
+        </div>
+
+
+        <div class="stats">
+
+            <div class="stat">
+                ⭐ Score:
+                <span id="score">
+                    0
+                </span>
+            </div>
+
+            <div class="stat">
+                ❤️ Attempts:
+                <span id="attempts">
+                    0
+                </span>
+            </div>
+
+            <div class="stat">
+                🐾 Pairs:
+                <span id="pairs">
+                    0
+                </span>
+            </div>
+
+        </div>
+
+
+        <div
+            class="message"
+            id="message"
+        ></div>
+
+
+        <div
+            class="memory-grid"
+            id="memoryGrid"
+        ></div>
+
+
+        <button
+            class="restart-btn"
+            onclick="restartGame()"
+        >
+            🔄 Restart
+        </button>
+
+
+        <button
+            class="next-btn"
+            id="nextButton"
+            onclick="nextLevel()"
+        >
+            ➡️ Next Level
+        </button>
+
+    </div>
+
+
+    <!-- =========================
+         GAME OVER SCREEN
+    ========================== -->
+
+    <div
+        class="game-over"
+        id="gameOver"
+    >
+
+        <h1>
+            🎉 Great Job! 🎉
+        </h1>
+
+        <h2>
+            You finished the game!
+        </h2>
+
+
+        <div class="stars">
+            ⭐ ⭐ ⭐
+        </div>
+
+
+        <p>
+            Your final score is:
+        </p>
+
+
+        <div class="final-score">
+
+            <span id="finalScore">
+                0
+            </span>
+
+        </div>
+
+
+        <p>
+            You learned animal names
+            in English! 🐶 🐱 🐰
+        </p>
+
+
+        <button
+            class="start-btn"
+            onclick="playAgain()"
+        >
+            🔄 Play Again
+        </button>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+/* =========================================
+   ANIMAL VOCABULARY
+========================================= */
+
+const animals = [
+
+    {
+        name: "DOG",
+        emoji: "🐶",
+        color: "#FFE0E6"
+    },
+
+    {
+        name: "CAT",
+        emoji: "🐱",
+        color: "#E4D7FF"
+    },
+
+    {
+        name: "RABBIT",
+        emoji: "🐰",
+        color: "#D9F5FF"
+    },
+
+    {
+        name: "LION",
+        emoji: "🦁",
+        color: "#FFF0C2"
+    },
+
+    {
+        name: "MONKEY",
+        emoji: "🐵",
+        color: "#E5D0B8"
+    },
+
+    {
+        name: "ELEPHANT",
+        emoji: "🐘",
+        color: "#DDE4EA"
+    },
+
+    {
+        name: "FROG",
+        emoji: "🐸",
+        color: "#D9FFD9"
+    },
+
+    {
+        name: "PENGUIN",
+        emoji: "🐧",
+        color: "#DCEBFF"
+    }
+
+];
+
+
+/* =========================================
+   GAME VARIABLES
+========================================= */
+
+let level = 1;
+
+let score = 0;
+
+let attempts = 0;
+
+let matchedPairs = 0;
+
+let firstCard = null;
+
+let secondCard = null;
+
+let lockBoard = false;
+
+let currentAnimals = [];
+
+
+/* =========================================
+   LEVEL DIFFICULTY
+========================================= */
+
+function getAnimalsForLevel() {
+
+    /*
+       LEVEL 1:
+       3 animals = 6 cards
+
+       LEVEL 2:
+       4 animals = 8 cards
+
+       LEVEL 3:
+       6 animals = 12 cards
+    */
+
+    if (level === 1) {
+
+        return animals.slice(0, 3);
+
+    }
+
+    if (level === 2) {
+
+        return animals.slice(0, 4);
+
+    }
+
+    return animals.slice(0, 6);
+
+}
+
+
+/* =========================================
+   START GAME
+========================================= */
+
+function startGame() {
+
+    document
+        .getElementById("startScreen")
+        .classList.remove("active");
+
+
+    document
+        .getElementById("gameOver")
+        .classList.remove("active");
+
+
+    document
+        .getElementById("gameScreen")
+        .classList.remove("hidden");
+
+
+    level = 1;
+
+    score = 0;
+
+    attempts = 0;
+
+    matchedPairs = 0;
+
+
+    updateStats();
+
+    createBoard();
+
+}
+
+
+/* =========================================
+   CREATE BOARD
+========================================= */
+
+function createBoard() {
+
+    const grid =
+        document.getElementById(
+            "memoryGrid"
+        );
+
+
+    grid.innerHTML = "";
+
+
+    currentAnimals =
+        getAnimalsForLevel();
+
+
+    matchedPairs = 0;
+
+    firstCard = null;
+
+    secondCard = null;
+
+    lockBoard = false;
+
+
+    document
+        .getElementById("levelText")
+        .textContent =
+        "Level " + level;
+
+
+    document
+        .getElementById("pairs")
+        .textContent = "0";
+
+
+    document
+        .getElementById("message")
+        .textContent = "";
+
+
+    document
+        .getElementById("nextButton")
+        .style.display = "none";
+
+
+    let cards = [];
+
+
+    /*
+       Create one image card
+       and one word card
+       for every animal.
+    */
+
+    currentAnimals.forEach(
+        animal => {
+
+            cards.push({
+
+                type: "image",
+
+                animal: animal
+
+            });
+
+
+            cards.push({
+
+                type: "word",
+
+                animal: animal
+
+            });
+
+        }
+    );
+
+
+    shuffle(cards);
+
+
+    cards.forEach(
+        cardData => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.classList.add(
+                "card"
+            );
+
+
+            card.dataset.animal =
+                cardData.animal.name;
+
+
+            card.dataset.type =
+                cardData.type;
+
+
+            card.innerHTML = `
+
+                <div class="card-inner">
+
+                    <div class="card-front">
+                        ❓
+                    </div>
+
+                    <div
+                        class="card-back"
+                        style="
+                            background:
+                            ${cardData.animal.color}
+                        "
+                    >
+
+                        <div class="animal-emoji">
+
+                            ${cardData.animal.emoji}
+
+                        </div>
+
+                        <div class="animal-word">
+
+                            ${cardData.animal.name}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            card.addEventListener(
+                "click",
+                () => flipCard(card)
+            );
+
+
+            grid.appendChild(card);
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   FLIP CARD
+========================================= */
+
+function flipCard(card) {
+
+    if (lockBoard) return;
+
+
+    if (card === firstCard)
+        return;
+
+
+    if (
+        card.classList.contains(
+            "matched"
+        )
+    ) {
+        return;
+    }
+
+
+    card.classList.add(
+        "flipped"
+    );
+
+
+    if (!firstCard) {
+
+        firstCard = card;
+
+        return;
+
+    }
+
+
+    secondCard = card;
+
+    attempts++;
+
+
+    updateStats();
+
+
+    checkMatch();
+
+}
+
+
+/* =========================================
+   CHECK MATCH
+========================================= */
+
+function checkMatch() {
+
+    const sameAnimal =
+        firstCard.dataset.animal ===
+        secondCard.dataset.animal;
+
+
+    const differentTypes =
+        firstCard.dataset.type !==
+        secondCard.dataset.type;
+
+
+    if (
+        sameAnimal &&
+        differentTypes
+    ) {
+
+        matchSuccess();
+
+    }
+
+    else {
+
+        matchFail();
+
+    }
+
+}
+
+
+/* =========================================
+   CORRECT MATCH
+========================================= */
+
+function matchSuccess() {
+
+    lockBoard = true;
+
+
+    matchedPairs++;
+
+
+    /*
+       Correct answer:
+       +10 points
+    */
+
+    score += 10;
+
+
+    firstCard.classList.add(
+        "matched"
+    );
+
+
+    secondCard.classList.add(
+        "matched"
+    );
+
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+
+    message.textContent =
+        "🎉 Great! That's a match!";
+
+
+    message.className =
+        "message correct-message";
+
+
+    updateStats();
+
+
+    setTimeout(
+        () => {
+
+            resetTurn();
+
+            checkLevelComplete();
+
+        },
+
+        700
+    );
+
+}
+
+
+/* =========================================
+   INCORRECT MATCH
+========================================= */
+
+function matchFail() {
+
+    lockBoard = true;
+
+
+    /*
+       Incorrect answer:
+       Lose 2 points.
+    */
+
+    score =
+        Math.max(
+            0,
+            score - 2
+        );
+
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+
+    message.textContent =
+        "💭 Try again!";
+
+
+    message.className =
+        "message wrong-message";
+
+
+    firstCard.classList.add(
+        "incorrect"
+    );
+
+
+    secondCard.classList.add(
+        "incorrect"
+    );
+
+
+    setTimeout(
+        () => {
+
+            firstCard.classList.remove(
+                "flipped"
+            );
+
+
+            secondCard.classList.remove(
+                "flipped"
+            );
+
+
+            firstCard.classList.remove(
+                "incorrect"
+            );
+
+
+            secondCard.classList.remove(
+                "incorrect"
+            );
+
+
+            resetTurn();
+
+        },
+
+        900
+    );
+
+
+    updateStats();
+
+}
+
+
+/* =========================================
+   RESET TURN
+========================================= */
+
+function resetTurn() {
+
+    firstCard = null;
+
+    secondCard = null;
+
+    lockBoard = false;
+
+}
+
+
+/* =========================================
+   CHECK LEVEL
+========================================= */
+
+function checkLevelComplete() {
+
+    if (
+        matchedPairs ===
+        currentAnimals.length
+    ) {
+
+
+        if (level < 3) {
+
+            document
+                .getElementById(
+                    "message"
+                )
+                .textContent =
+                "🌟 Level complete! Great job!";
+
+
+            document
+                .getElementById(
+                    "nextButton"
+                )
+                .style.display =
+                "inline-block";
+
+        }
+
+        else {
+
+            setTimeout(
+                endGame,
+                800
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================================
+   NEXT LEVEL
+========================================= */
+
+function nextLevel() {
+
+    level++;
+
+    createBoard();
+
+}
+
+
+/* =========================================
+   GAME OVER
+========================================= */
+
+function endGame() {
+
+    document
+        .getElementById(
+            "gameScreen"
+        )
+        .classList.add(
+            "hidden"
+        );
+
+
+    document
+        .getElementById(
+            "gameOver"
+        )
+        .classList.add(
+            "active"
+        );
+
+
+    document
+        .getElementById(
+            "finalScore"
+        )
+        .textContent =
+        score;
+
+}
+
+
+/* =========================================
+   PLAY AGAIN
+========================================= */
+
+function playAgain() {
+
+    document
+        .getElementById(
+            "gameOver"
+        )
+        .classList.remove(
+            "active"
+        );
+
+
+    document
+        .getElementById(
+            "gameScreen"
+        )
+        .classList.remove(
+            "hidden"
+        );
+
+
+    level = 1;
+
+    score = 0;
+
+    attempts = 0;
+
+    matchedPairs = 0;
+
+
+    updateStats();
+
+    createBoard();
+
+}
+
+
+/* =========================================
+   RESTART DURING GAME
+========================================= */
+
+function restartGame() {
+
+    level = 1;
+
+    score = 0;
+
+    attempts = 0;
+
+    matchedPairs = 0;
+
+
+    updateStats();
+
+    createBoard();
+
+}
+
+
+/* =========================================
+   UPDATE STATS
+========================================= */
+
+function updateStats() {
+
+    document
+        .getElementById(
+            "score"
+        )
+        .textContent =
+        score;
+
+
+    document
+        .getElementById(
+            "attempts"
+        )
+        .textContent =
+        attempts;
+
+
+    document
+        .getElementById(
+            "pairs"
+        )
+        .textContent =
+        matchedPairs;
+
+}
+
+
+/* =========================================
+   SHUFFLE CARDS
+========================================= */
+
+function shuffle(array) {
+
+    for (
+        let i = array.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() *
+                (i + 1)
+            );
+
+
+        [
+            array[i],
+            array[j]
+        ] =
+        [
+            array[j],
+            array[i]
+        ];
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
+
